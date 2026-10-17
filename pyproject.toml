@@ -15,6 +15,8 @@ maintainers = [
 ]
 
 dependencies = [
+    "pyhanko>=0.25",
+    "requests",
 ]
 
 [project.entry-points."pretix.plugin"]
