@@ -52,8 +52,8 @@ namespaces = false
 [dependency-groups]
 dev = ["ruff", "commitizen"]
 test = [
-    "pytest",
-    "pytest-django",
+    "pytest>=8.0",
+    "pytest-django>=4.8,<5.0",
     "coverage",
     "pretix @ git+https://github.com/pretix/pretix.git@master",
 ]
