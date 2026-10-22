@@ -1,0 +1,5 @@
+[plugin]
+package = "pretix-attendance-certificate-neo"
+modules = [ "pretix_attendance_certificate_neo" ]
+marketplace_name = "attendance-certificate-neo"
+
