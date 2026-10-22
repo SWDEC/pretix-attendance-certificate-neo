@@ -1,5 +1,6 @@
 import datetime
 
+from django.utils.timezone import now
 from i18nfield.strings import LazyI18nString
 from pretix.base.email import get_email_context
 from pretix.base.i18n import language
@@ -52,7 +53,7 @@ def send_certificate_of_attendance_mails(
             )
             cache_file = CachedFile.objects.create(
                 filename="certificate_of_attendance.pdf",
-                expires=datetime.datetime.now() + datetime.timedelta(days=7),
+                expires=now() + datetime.timedelta(days=7),
                 file=rendered_certificate,
             )
 
