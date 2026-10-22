@@ -15,6 +15,7 @@ maintainers = [
 ]
 
 dependencies = [
+    "markdown>=3.10",
     "pyhanko>=0.25",
     "requests",
 ]
