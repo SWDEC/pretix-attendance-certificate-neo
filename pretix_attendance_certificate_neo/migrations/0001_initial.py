@@ -3,7 +3,7 @@
 from django.db import migrations, models
 import django.db.models.deletion
 import pretix.base.models.base
-import pretix_attendance_certificate.models
+import pretix_attendance_certificate_neo.models
 
 
 class Migration(migrations.Migration):
@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
                     models.FileField(
                         max_length=255,
                         null=True,
-                        upload_to=pretix_attendance_certificate.models.bg_name,
+                        upload_to=pretix_attendance_certificate_neo.models.bg_name,
                     ),
                 ),
                 (

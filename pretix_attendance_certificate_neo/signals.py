@@ -3,7 +3,7 @@ from django.urls import resolve, reverse
 from django.dispatch import receiver
 from django.template.loader import get_template
 from django.utils.safestring import mark_safe
-from pretix_attendance_certificate.views.emails import SendCertificateEmailView
+from pretix_attendance_certificate_neo.views.emails import SendCertificateEmailView
 from pretix.control.signals import (
     nav_event,
     order_position_buttons,
@@ -27,7 +27,7 @@ def control_nav_import(sender, request=None, **kwargs):
         {
             "label": _("Certificate of Attendance"),
             "url": reverse(
-                "plugins:pretix_attendance_certificate:edit",
+                "plugins:pretix_attendance_certificate_neo:edit",
                 kwargs={
                     "event": request.event.slug,
                     "organizer": request.event.organizer.slug,
@@ -39,25 +39,25 @@ def control_nav_import(sender, request=None, **kwargs):
                 {
                     "label": _("Editor"),
                     "url": reverse(
-                        "plugins:pretix_attendance_certificate:edit",
+                        "plugins:pretix_attendance_certificate_neo:edit",
                         kwargs={
                             "event": request.event.slug,
                             "organizer": request.event.organizer.slug,
                         },
                     ),
-                    "active": url.namespace == "plugins:pretix_attendance_certificate"
+                    "active": url.namespace == "plugins:pretix_attendance_certificate_neo"
                     and url.url_name == "edit",
                 },
                 {
                     "label": _("Send out certificates"),
                     "url": reverse(
-                        "plugins:pretix_attendance_certificate:send",
+                        "plugins:pretix_attendance_certificate_neo:send",
                         kwargs={
                             "event": request.event.slug,
                             "organizer": request.event.organizer.slug,
                         },
                     ),
-                    "active": url.namespace == "plugins:pretix_attendance_certificate"
+                    "active": url.namespace == "plugins:pretix_attendance_certificate_neo"
                     and url.url_name == "send",
                 },
             ],
@@ -66,7 +66,7 @@ def control_nav_import(sender, request=None, **kwargs):
 
 
 @receiver(
-    sendmail_view_classes, dispatch_uid="pretix_attendance_certificate_sendmail_view"
+    sendmail_view_classes, dispatch_uid="pretix_attendance_certificate_neo_sendmail_view"
 )
 def register_sendmail_view(sender, **kwargs):
     return [SendCertificateEmailView]
@@ -74,14 +74,14 @@ def register_sendmail_view(sender, **kwargs):
 
 @receiver(
     order_position_buttons,
-    dispatch_uid="pretix_attendance_certificate_order_position_buttons",
+    dispatch_uid="pretix_attendance_certificate_neo_order_position_buttons",
 )
 def control_order_position_buttons(sender, position, order, request, **kwargs):
     if not position.item.admission:
         return None
 
     template = get_template(
-        "pretix_attendance_certificate/control_order_position_buttons.html"
+        "pretix_attendance_certificate_neo/control_order_position_buttons.html"
     )
     return mark_safe(template.render(
         {
@@ -96,10 +96,10 @@ def control_order_position_buttons(sender, position, order, request, **kwargs):
 
 @receiver(
     signal=logentry_display,
-    dispatch_uid="pretix_attendance_certificate_sendmail_view_logentry_display",
+    dispatch_uid="pretix_attendance_certificate_neo_sendmail_view_logentry_display",
 )
 def pretix_logentry_display(sender, logentry, **kwargs):
-    if logentry.action_type == "pretix_attendance_certificate.sent.attendee":
+    if logentry.action_type == "pretix_attendance_certificate_neo.sent.attendee":
         order_position = OrderPosition.objects.get(id=logentry.parsed_data["position"])
         return _(
             "An email has been sent with the certificate of attendance "
@@ -108,9 +108,9 @@ def pretix_logentry_display(sender, logentry, **kwargs):
 
     if (
         logentry.action_type
-        == "pretix.plugins.pretix_attendance_certificate.layout.changed"
+        == "pretix.plugins.pretix_attendance_certificate_neo.layout.changed"
     ):
         return _("The layout of the certificate of attendance has been changed.")
 
-    if logentry.action_type == "pretix_attendance_certificate.sendmail.sent":
+    if logentry.action_type == "pretix_attendance_certificate_neo.sendmail.sent":
         return _("The certificate of attendance has been sent out to all attendees.")

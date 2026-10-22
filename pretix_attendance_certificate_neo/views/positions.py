@@ -8,8 +8,8 @@ from django.views import View
 from pretix.base.models import OrderPosition
 from pretix.control.permissions import EventPermissionRequiredMixin
 
-from pretix_attendance_certificate.render import render_certificate
-from pretix_attendance_certificate.tasks import send_certificate_of_attendance_mails
+from pretix_attendance_certificate_neo.render import render_certificate
+from pretix_attendance_certificate_neo.tasks import send_certificate_of_attendance_mails
 
 DEFAULT_SUBJECT = _("[{event}] Your certificate of attendance")
 DEFAULT_MESSAGE = _(

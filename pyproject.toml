@@ -8,14 +8,14 @@ dev = [
 ]
 
 [tool.pdm.build]
-includes = ["pretix_attendance_certificate"]
+includes = ["pretix_attendance_certificate_neo"]
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 
 [project]
-name = "pretix-plugin-attendance-certificate"
+name = "pretix-attendance-certificate-neo"
 version = "0.1.15"
 description = "Create attendance certificates"
 authors = [
@@ -27,4 +27,4 @@ readme = "README.md"
 license = {text = "MIT"}
 
 [project.entry-points."pretix.plugin"]
-pretix_attendance_certificate = "pretix_attendance_certificate:PretixPluginMeta"
+pretix_attendance_certificate_neo = "pretix_attendance_certificate_neo:PretixPluginMeta"

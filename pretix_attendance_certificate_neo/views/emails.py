@@ -7,7 +7,7 @@ from pretix.plugins.sendmail.views import BaseSenderView
 from pretix.plugins.sendmail.forms import BaseMailForm
 from pretix.base.models import OrderPosition, Order
 
-from pretix_attendance_certificate.tasks import send_certificate_of_attendance_mails
+from pretix_attendance_certificate_neo.tasks import send_certificate_of_attendance_mails
 
 
 class CertificateEmailForm(BaseMailForm):
@@ -18,19 +18,19 @@ class CertificateEmailForm(BaseMailForm):
 class SendCertificateEmailView(BaseSenderView):
     form_class = CertificateEmailForm
     form_fragment_name = (
-        "pretix_attendance_certificate/send_form_fragment_attendance_certificate.html"
+        "pretix_attendance_certificate_neo/send_form_fragment_attendance_certificate.html"
     )
     context_parameters = ["event", "order", "position_or_address"]
     task = send_certificate_of_attendance_mails
 
-    ACTION_TYPE = "pretix_attendance_certificate.sendmail.sent"
+    ACTION_TYPE = "pretix_attendance_certificate_neo.sendmail.sent"
     TITLE = _("Attendance Certificate")
     DESCRIPTION = _("Send out the attendance certificates to attendees.")
 
     @classmethod
     def get_url(cls, event):
         return reverse(
-            "plugins:pretix_attendance_certificate:send",
+            "plugins:pretix_attendance_certificate_neo:send",
             kwargs={
                 "event": event.slug,
                 "organizer": event.organizer.slug,
@@ -62,7 +62,7 @@ class SendCertificateEmailView(BaseSenderView):
     @classmethod
     def show_history_meta_data(cls, logentry, _cache_store):
         tpl = get_template(
-            "pretix_attendance_certificate/history_fragment_attendance_certificate.html"
+            "pretix_attendance_certificate_neo/history_fragment_attendance_certificate.html"
         )
         return tpl.render(
             {

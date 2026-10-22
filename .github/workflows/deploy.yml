@@ -7,7 +7,7 @@ on:
     branches:
       - main
     paths:
-      - 'pretix_attendance_certificate/**/*'
+      - 'pretix_attendance_certificate_neo/**/*'
       - 'pyproject.toml'
   workflow_dispatch:
     inputs:

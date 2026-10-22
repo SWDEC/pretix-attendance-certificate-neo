@@ -6,7 +6,7 @@ import json
 from django.core.files.storage import default_storage
 from django.contrib.staticfiles import finders
 from pretix.base.pdf import Renderer
-from pretix_attendance_certificate.models import AttendanceCertificateLayout
+from pretix_attendance_certificate_neo.models import AttendanceCertificateLayout
 from reportlab.pdfgen import canvas
 from reportlab.lib import pagesizes
 from django.core.files.base import ContentFile
@@ -20,7 +20,7 @@ def _renderer(event, layout):
     else:
         bgf = open(
             finders.find(
-                "pretix_attendance_certificate/empty_attendance_certificate.pdf"
+                "pretix_attendance_certificate_neo/empty_attendance_certificate.pdf"
             ),
             "rb",
         )

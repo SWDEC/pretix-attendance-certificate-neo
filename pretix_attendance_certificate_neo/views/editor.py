@@ -10,7 +10,7 @@ import json
 from django.utils.translation import gettext_lazy as _
 from django.utils.functional import cached_property
 from django.http import Http404
-from pretix_attendance_certificate.models import AttendanceCertificateLayout
+from pretix_attendance_certificate_neo.models import AttendanceCertificateLayout
 from pretix.control.views.pdf import BaseEditorView
 from django.templatetags.static import static
 
@@ -27,7 +27,7 @@ class EditorView(BaseEditorView):
         return layout
 
     def get_default_background(self):
-        return static("pretix_attendance_certificate/empty_attendance_certificate.pdf")
+        return static("pretix_attendance_certificate_neo/empty_attendance_certificate.pdf")
 
     def get_current_background(self):
         return (
@@ -55,7 +55,7 @@ class EditorView(BaseEditorView):
             update_fields.append("name")
         self.layout.save(update_fields=update_fields)
         self.layout.log_action(
-            action="pretix.plugins.pretix_attendance_certificate.layout.changed",
+            action="pretix.plugins.pretix_attendance_certificate_neo.layout.changed",
             user=self.request.user,
             data={
                 "layout": self.request.POST.get("data"),
@@ -76,7 +76,7 @@ class EditorView(BaseEditorView):
         else:
             bgf = open(
                 finders.find(
-                    "pretix_attendance_certificate/empty_attendance_certificate.pdf"
+                    "pretix_attendance_certificate_neo/empty_attendance_certificate.pdf"
                 ),
                 "rb",
             )

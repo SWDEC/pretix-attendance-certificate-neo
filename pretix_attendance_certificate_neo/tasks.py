@@ -7,7 +7,7 @@ from pretix.base.services.mail import mail
 from pretix.base.i18n import language
 from pretix.helpers.format import format_map
 from pretix.base.email import get_email_context
-from pretix_attendance_certificate.render import render_certificate
+from pretix_attendance_certificate_neo.render import render_certificate
 
 
 @app.task(base=ProfiledEventTask, acks_late=True)
@@ -55,7 +55,7 @@ def send_certificate_of_attendance_mails(
                 attach_cached_files=[cache_file],
             )
             order.log_action(
-                "pretix_attendance_certificate.sent.attendee",
+                "pretix_attendance_certificate_neo.sent.attendee",
                 user=user,
                 data={
                     "position": position.positionid,

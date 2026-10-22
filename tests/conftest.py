@@ -16,7 +16,7 @@ from pretix.base.models import (
     User,
 )
 
-from pretix_attendance_certificate.models import AttendanceCertificateLayout
+from pretix_attendance_certificate_neo.models import AttendanceCertificateLayout
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -47,7 +47,7 @@ def event():
         slug="dummy",
         date_from=now(),
         live=True,
-        plugins="pretix_attendance_certificate",
+        plugins="pretix_attendance_certificate_neo",
     )
     return event
 

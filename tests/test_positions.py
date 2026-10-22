@@ -13,7 +13,7 @@ def _messages(response):
 
 def _download_url(event, position):
     return reverse(
-        "plugins:pretix_attendance_certificate:position.download",
+        "plugins:pretix_attendance_certificate_neo:position.download",
         kwargs={
             "organizer": event.organizer.slug,
             "event": event.slug,
@@ -24,7 +24,7 @@ def _download_url(event, position):
 
 def _send_url(event, position):
     return reverse(
-        "plugins:pretix_attendance_certificate:position.send",
+        "plugins:pretix_attendance_certificate_neo:position.send",
         kwargs={
             "organizer": event.organizer.slug,
             "event": event.slug,
@@ -87,7 +87,7 @@ def test_send_certificate_email(logged_in_client, event, order, pos, layout):
     with scopes_disabled():
         assert (
             order.all_logentries()
-            .filter(action_type="pretix_attendance_certificate.sent.attendee")
+            .filter(action_type="pretix_attendance_certificate_neo.sent.attendee")
             .exists()
         )
 

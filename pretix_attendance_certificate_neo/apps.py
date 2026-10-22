@@ -9,7 +9,7 @@ except ImportError:
 
 
 class PluginApp(PluginConfig):
-    name = "pretix_attendance_certificate"
+    name = "pretix_attendance_certificate_neo"
     verbose_name = "Attendance Certificate"
 
     class PretixPluginMeta:
@@ -17,7 +17,7 @@ class PluginApp(PluginConfig):
         author = "Python Italia"
         description = gettext_lazy("Create Attendance Certificates for your attendees")
         visible = True
-        version = version("pretix-plugin-attendance-certificate")
+        version = version("pretix-attendance-certificate-neo")
         category = "FEATURE"
         compatibility = "pretix>=2.7.0"
 
@@ -31,4 +31,4 @@ class PluginApp(PluginConfig):
             )
 
 
-default_app_config = "pretix_attendance_certificate.PluginApp"
+default_app_config = "pretix_attendance_certificate_neo.PluginApp"
