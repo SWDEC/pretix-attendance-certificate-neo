@@ -42,8 +42,7 @@ Commits in this repository follow
 cut with [Commitizen](https://commitizen-tools.github.io/commitizen/)
 (`cz bump`), which updates the version in `pyproject.toml` and
 `pretix_attendance_certificate_neo/__init__.py`, writes `CHANGELOG.md` and
-creates the matching git tag. While the version is 0.x, breaking changes bump
-the minor version.
+creates the matching git tag.
 
 ## Quick start without a pretix checkout
 
