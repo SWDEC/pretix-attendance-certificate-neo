@@ -9,6 +9,10 @@ the plugin used by https://pycon.it. It uses its own Python package
 (`pretix_attendance_certificate_neo`), so it can be installed next to the
 original plugin; data of the original plugin is not taken over.
 
+## Requirements
+
+pretix 2026.7.0 or newer and Python 3.11 or newer.
+
 ## Development setup
 
 1. Make sure that you have a working
