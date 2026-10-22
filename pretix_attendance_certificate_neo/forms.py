@@ -1,6 +1,5 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
-
 from pretix.plugins.sendmail.forms import FormPlaceholderMixin
 
 from pretix_attendance_certificate_neo.models import (
@@ -18,7 +17,7 @@ from pretix_attendance_certificate_neo.signing import (
 # exist, so they get a general note instead of the generated list.
 ORGANIZER_PLACEHOLDER_HELP = _(
     "Placeholders: {event} (event name), {name} (attendee's full name), "
-    "{name_for_salutation} (name as used in a salutation, e.g. \"Mr Doe\"), "
+    '{name_for_salutation} (name as used in a salutation, e.g. "Mr Doe"), '
     "{code} (order code), {url} (link to the order page). Heads-up: "
     "{name_given_name} (first name) and {name_family_name} (last name) only exist "
     "for events that collect the name in parts. For any other event they are sent "
@@ -128,5 +127,5 @@ class ImportCertificateForm(forms.Form):
         except InvalidCertificate:
             raise forms.ValidationError(
                 _("The file could not be read. Check the file and the password.")
-            )
+            ) from None
         return data

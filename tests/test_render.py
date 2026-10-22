@@ -3,7 +3,6 @@ from io import BytesIO
 
 import pytest
 from django_scopes import scopes_disabled
-
 from pretix.base.models import Question, QuestionAnswer
 
 from pretix_attendance_certificate_neo.render import render_certificate
@@ -11,9 +10,18 @@ from pretix_attendance_certificate_neo.render import render_certificate
 
 def _field(content, bottom):
     return {
-        "type": "textarea", "left": "20", "bottom": str(bottom), "fontsize": "14",
-        "color": [0, 0, 0, 1], "fontfamily": "Open Sans", "bold": False, "italic": False,
-        "width": "150", "content": content, "text": "x", "align": "left",
+        "type": "textarea",
+        "left": "20",
+        "bottom": str(bottom),
+        "fontsize": "14",
+        "color": [0, 0, 0, 1],
+        "fontfamily": "Open Sans",
+        "bold": False,
+        "italic": False,
+        "width": "150",
+        "content": content,
+        "text": "x",
+        "align": "left",
     }
 
 

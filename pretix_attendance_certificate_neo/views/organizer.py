@@ -3,7 +3,6 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, ListView, UpdateView
-
 from pretix.control.permissions import OrganizerPermissionRequiredMixin
 from pretix.control.views.organizer import OrganizerDetailViewMixin
 from pretix.helpers.compat import CompatDeleteView
@@ -19,7 +18,9 @@ class OrganizerLayoutFormMixin:
         return kwargs
 
 
-class OrganizerLayoutListView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, ListView):
+class OrganizerLayoutListView(
+    OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, ListView
+):
     model = AttendanceCertificateLayout
     template_name = "pretix_attendance_certificate_neo/organizer_layout_list.html"
     permission = "can_change_organizer_settings"
@@ -124,7 +125,9 @@ class OrganizerLayoutUpdateView(
         return super().form_invalid(form)
 
 
-class OrganizerLayoutDeleteView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, CompatDeleteView):
+class OrganizerLayoutDeleteView(
+    OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, CompatDeleteView
+):
     model = AttendanceCertificateLayout
     template_name = "pretix_attendance_certificate_neo/organizer_layout_delete.html"
     permission = "can_change_organizer_settings"

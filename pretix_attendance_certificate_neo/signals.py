@@ -1,29 +1,31 @@
 import copy
-from django.utils.translation import gettext_lazy as _
-from django.urls import resolve, reverse
+
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from django.template.loader import get_template
+from django.urls import resolve, reverse
 from django.utils.safestring import mark_safe
-from pretix_attendance_certificate_neo.views.emails import SendCertificateEmailView
-from pretix_attendance_certificate_neo.views.presale import (
-    SELF_SERVICE_SETTING,
-    downloadable_options,
-)
+from django.utils.translation import gettext_lazy as _
+from pretix.base.models import CheckinList, OrderPosition
+from pretix.base.signals import event_copy_data, logentry_display
 from pretix.control.signals import (
     nav_event,
     nav_organizer,
     order_position_buttons,
 )
-from pretix.plugins.sendmail.signals import sendmail_view_classes
-from pretix.base.signals import event_copy_data, logentry_display
 from pretix.multidomain.urlreverse import eventreverse
+from pretix.plugins.sendmail.signals import sendmail_view_classes
 from pretix.presale.signals import order_info, position_info
-from pretix.base.models import CheckinList, OrderPosition
+
 from pretix_attendance_certificate_neo.models import (
     AttendanceCertificateLayout,
     LayoutActivation,
     certificate_options,
+)
+from pretix_attendance_certificate_neo.views.emails import SendCertificateEmailView
+from pretix_attendance_certificate_neo.views.presale import (
+    SELF_SERVICE_SETTING,
+    downloadable_options,
 )
 
 
@@ -59,7 +61,8 @@ def control_nav_import(sender, request=None, **kwargs):
                             "organizer": request.event.organizer.slug,
                         },
                     ),
-                    "active": url.namespace == "plugins:pretix_attendance_certificate_neo"
+                    "active": url.namespace
+                    == "plugins:pretix_attendance_certificate_neo"
                     and url.url_name in ("layouts", "edit"),
                 },
                 {
@@ -71,7 +74,8 @@ def control_nav_import(sender, request=None, **kwargs):
                             "organizer": request.event.organizer.slug,
                         },
                     ),
-                    "active": url.namespace == "plugins:pretix_attendance_certificate_neo"
+                    "active": url.namespace
+                    == "plugins:pretix_attendance_certificate_neo"
                     and url.url_name == "send",
                 },
             ],
@@ -129,13 +133,12 @@ def deactivate_templates_of_deleted_checkin_list(sender, instance, **kwargs):
         )
 
 
-@receiver(
-    event_copy_data, dispatch_uid="pretix_attendance_certificate_neo_copy_data"
-)
+@receiver(event_copy_data, dispatch_uid="pretix_attendance_certificate_neo_copy_data")
 def copy_attendance_certificate_data(sender, other, **kwargs):
     """Event-owned templates aren't copied by pretix's generic event-copy
     machinery (only its own core models are) - this carries them over, along
     with which organizer-wide templates the source event had activated."""
+
     def copy_settings(old_layout, new_layout):
         old = LayoutActivation.objects.filter(layout=old_layout, event=other).first()
         if old is None:
@@ -242,7 +245,8 @@ def presale_position_info(sender, order, position, request, **kwargs):
 
 
 @receiver(
-    sendmail_view_classes, dispatch_uid="pretix_attendance_certificate_neo_sendmail_view"
+    sendmail_view_classes,
+    dispatch_uid="pretix_attendance_certificate_neo_sendmail_view",
 )
 def register_sendmail_view(sender, **kwargs):
     return [SendCertificateEmailView]
@@ -259,16 +263,18 @@ def control_order_position_buttons(sender, position, order, request, **kwargs):
     template = get_template(
         "pretix_attendance_certificate_neo/control_order_position_buttons.html"
     )
-    return mark_safe(template.render(
-        {
-            "event": sender,
-            "order": order,
-            "position": position,
-            "request": request,
-            "options": certificate_options(position),
-        },
-        request=request,
-    ).strip())
+    return mark_safe(
+        template.render(
+            {
+                "event": sender,
+                "order": order,
+                "position": position,
+                "request": request,
+                "options": certificate_options(position),
+            },
+            request=request,
+        ).strip()
+    )
 
 
 @receiver(

@@ -6,7 +6,6 @@ from django.core import mail as djmail
 from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
-
 from pretix.base.models import Checkin, CheckinList, Event, Order, OrderPosition
 from pretix.base.signals import event_copy_data
 from pretix.multidomain.urlreverse import eventreverse
@@ -73,9 +72,7 @@ def _send(event, pos):
 
 
 def _order_url(event, order):
-    return "/control/event/{o}/{e}/orders/{c}/".format(
-        o=event.organizer.slug, e=event.slug, c=order.code
-    )
+    return f"/control/event/{event.organizer.slug}/{event.slug}/orders/{order.code}/"
 
 
 def _messages(response):
@@ -86,8 +83,11 @@ def _messages(response):
 
 
 @pytest.mark.django_db
-def test_eligibility_follows_successful_checkins(event, order, pos, layout, passed_layout, passed_list):
+def test_eligibility_follows_successful_checkins(
+    event, order, pos, layout, passed_layout, passed_list
+):
     with scopes_disabled():
+
         def eligible():
             return {o.layout.name: o.applicable for o in certificate_options(pos)}
 
@@ -107,8 +107,8 @@ def test_order_view_disables_buttons_for_ineligible_templates(
 ):
     content = logged_in_client.get(_order_url(event, order)).content.decode()
     # Eligible: normal link; ineligible: no link, disabled send button.
-    assert "?layout=%d" % layout.pk in content
-    assert "?layout=%d" % passed_layout.pk not in content
+    assert f"?layout={layout.pk}" in content
+    assert f"?layout={passed_layout.pk}" not in content
     assert 'Not checked in on "Passed the course"' in content
     assert content.count("disabled") >= 2
 
@@ -120,7 +120,7 @@ def test_order_view_enables_buttons_once_checked_in(
     with scopes_disabled():
         _check_in(pos, passed_list)
     content = logged_in_client.get(_order_url(event, order)).content.decode()
-    assert "?layout=%d" % passed_layout.pk in content
+    assert f"?layout={passed_layout.pk}" in content
     assert 'Not checked in on "Passed the course"' not in content
 
 
@@ -200,25 +200,32 @@ def test_assign_checkin_list_and_toggle_self_service(
     response = logged_in_client.post(
         _assign_url(event),
         {
-            "list_%d" % organizer_layout.pk: passed_list.pk,
-            "list_%d" % layout.pk: "",
+            f"list_{organizer_layout.pk}": passed_list.pk,
+            f"list_{layout.pk}": "",
             "self_service": "on",
         },
     )
     assert response.status_code == 302
     with scopes_disabled():
         assert (
-            LayoutActivation.objects.get(layout=organizer_layout, event=event).checkin_list
+            LayoutActivation.objects.get(
+                layout=organizer_layout, event=event
+            ).checkin_list
             == passed_list
         )
-        assert LayoutActivation.objects.get(layout=layout, event=event).checkin_list is None
+        assert (
+            LayoutActivation.objects.get(layout=layout, event=event).checkin_list
+            is None
+        )
     assert event.settings.get(SELF_SERVICE_SETTING, as_type=bool)
 
     # Untick -> switched off again and the assignment can be cleared.
-    logged_in_client.post(_assign_url(event), {"list_%d" % organizer_layout.pk: ""})
+    logged_in_client.post(_assign_url(event), {f"list_{organizer_layout.pk}": ""})
     with scopes_disabled():
         assert (
-            LayoutActivation.objects.get(layout=organizer_layout, event=event).checkin_list
+            LayoutActivation.objects.get(
+                layout=organizer_layout, event=event
+            ).checkin_list
             is None
         )
     event.settings.flush()
@@ -232,10 +239,14 @@ def test_assign_rejects_checkin_list_of_another_event(
     with scopes_disabled():
         other = _new_event(event.organizer, slug="other-ev")
         foreign = CheckinList.objects.create(event=other, name="Foreign")
-    response = logged_in_client.post(_assign_url(event), {"list_%d" % layout.pk: foreign.pk})
+    response = logged_in_client.post(
+        _assign_url(event), {f"list_{layout.pk}": foreign.pk}
+    )
     assert response.status_code == 302
     with scopes_disabled():
-        assert not LayoutActivation.objects.filter(layout=layout, checkin_list=foreign).exists()
+        assert not LayoutActivation.objects.filter(
+            layout=layout, checkin_list=foreign
+        ).exists()
 
 
 @pytest.mark.django_db
@@ -248,12 +259,14 @@ def test_assign_requires_change_permission(client, event, layout):
         team.members.add(user)
         team.limit_events.add(event)
     client.force_login(user)
-    response = client.post(_assign_url(event), {"list_%d" % layout.pk: ""})
+    response = client.post(_assign_url(event), {f"list_{layout.pk}": ""})
     assert response.status_code == 403
 
 
 @pytest.mark.django_db
-def test_template_page_lists_assignment_form(logged_in_client, event, layout, passed_list):
+def test_template_page_lists_assignment_form(
+    logged_in_client, event, layout, passed_list
+):
     url = reverse(
         "plugins:pretix_attendance_certificate_neo:layouts",
         kwargs={"organizer": event.organizer.slug, "event": event.slug},
@@ -336,7 +349,9 @@ def test_bulk_send_single_tied_template_is_restricted(
 ):
     # Only one template available, but it is tied to a list -> still restricted.
     with scopes_disabled():
-        LayoutActivation.objects.create(layout=layout, event=event, checkin_list=passed_list)
+        LayoutActivation.objects.create(
+            layout=layout, event=event, checkin_list=passed_list
+        )
         _check_in(pos, passed_list)
     djmail.outbox = []
     logged_in_client.post(
@@ -363,7 +378,9 @@ def _self_service_url(event, order, pos, layout, secret=None):
 
 def _order_page(event, order):
     return eventreverse(
-        event, "presale:event.order", kwargs={"order": order.code, "secret": order.secret}
+        event,
+        "presale:event.order",
+        kwargs={"order": order.code, "secret": order.secret},
     )
 
 
@@ -389,7 +406,10 @@ def test_self_service_off_by_default(client, event, order, pos, layout):
     event.date_to = now() - timedelta(days=2)
     event.save()
     assert client.get(_self_service_url(event, order, pos, layout)).status_code == 404
-    assert "Download certificate of attendance" not in client.get(_order_page(event, order)).content.decode()
+    assert (
+        "Download certificate of attendance"
+        not in client.get(_order_page(event, order)).content.decode()
+    )
 
 
 @pytest.mark.django_db
@@ -401,7 +421,9 @@ def test_self_service_download(client, event, order, pos, layout, self_service):
 
 
 @pytest.mark.django_db
-def test_self_service_link_on_order_page(client, event, order, pos, layout, self_service):
+def test_self_service_link_on_order_page(
+    client, event, order, pos, layout, self_service
+):
     content = client.get(_order_page(event, order)).content.decode()
     assert "Download certificate of attendance" in content
     assert _self_service_url(event, order, pos, layout) in content
@@ -414,7 +436,11 @@ def test_self_service_link_on_ticket_page_uses_position_secret(
     url = eventreverse(
         event,
         "presale:event.order.position",
-        kwargs={"order": order.code, "position": pos.positionid, "secret": pos.web_secret},
+        kwargs={
+            "order": order.code,
+            "position": pos.positionid,
+            "secret": pos.web_secret,
+        },
     )
     content = client.get(url).content.decode()
     link = _self_service_url(event, order, pos, layout, secret=pos.web_secret)
@@ -424,12 +450,16 @@ def test_self_service_link_on_ticket_page_uses_position_secret(
 
 @pytest.mark.django_db
 def test_self_service_wrong_secret(client, event, order, pos, layout, self_service):
-    response = client.get(_self_service_url(event, order, pos, layout, secret="wrongsecret"))
+    response = client.get(
+        _self_service_url(event, order, pos, layout, secret="wrongsecret")
+    )
     assert response.status_code == 404
 
 
 @pytest.mark.django_db
-def test_self_service_requires_paid_order(client, event, order, pos, layout, self_service):
+def test_self_service_requires_paid_order(
+    client, event, order, pos, layout, self_service
+):
     with scopes_disabled():
         order.status = Order.STATUS_PENDING
         order.save()
@@ -459,7 +489,10 @@ def test_self_service_requires_the_event_to_be_over(
     event.date_to = now() + timedelta(days=1)
     event.save()
     assert client.get(_self_service_url(event, order, pos, layout)).status_code == 404
-    assert "Download certificate" not in client.get(_order_page(event, order)).content.decode()
+    assert (
+        "Download certificate"
+        not in client.get(_order_page(event, order)).content.decode()
+    )
     event.date_to = now() - timedelta(hours=1)
     event.save()
     assert client.get(_self_service_url(event, order, pos, layout)).status_code == 200
@@ -484,7 +517,10 @@ def test_self_service_requires_the_attendee_to_have_been_checked_in(
 ):
     # pos was checked in by the fixture, pos_absent was not.
     assert client.get(_self_service_url(event, order, pos, layout)).status_code == 200
-    assert client.get(_self_service_url(event, order, pos_absent, layout)).status_code == 404
+    assert (
+        client.get(_self_service_url(event, order, pos_absent, layout)).status_code
+        == 404
+    )
     content = client.get(_order_page(event, order)).content.decode()
     assert _self_service_url(event, order, pos_absent, layout) not in content
 
@@ -495,7 +531,10 @@ def test_self_service_ignores_failed_checkins(
 ):
     with scopes_disabled():
         _check_in(pos_absent, self_service, successful=False)
-    assert client.get(_self_service_url(event, order, pos_absent, layout)).status_code == 404
+    assert (
+        client.get(_self_service_url(event, order, pos_absent, layout)).status_code
+        == 404
+    )
 
 
 @pytest.mark.django_db
@@ -539,9 +578,7 @@ def test_event_copy_keeps_checkin_list_assignment_and_self_service(
 def _delete_list(client, event, checkin_list):
     # The real control view, so pretix' own deletion path is covered.
     return client.post(
-        "/control/event/{o}/{e}/checkinlists/{pk}/delete".format(
-            o=event.organizer.slug, e=event.slug, pk=checkin_list.pk
-        )
+        f"/control/event/{event.organizer.slug}/{event.slug}/checkinlists/{checkin_list.pk}/delete"
     )
 
 
@@ -549,7 +586,7 @@ def _available_names(event):
     from pretix_attendance_certificate_neo.models import available_layouts
 
     with scopes_disabled():
-        return [l.name for l in available_layouts(event)]
+        return [layout.name for layout in available_layouts(event)]
 
 
 @pytest.mark.django_db
@@ -557,7 +594,9 @@ def test_deleting_list_deactivates_event_owned_template(
     logged_in_client, event, layout, passed_list
 ):
     with scopes_disabled():
-        LayoutActivation.objects.create(layout=layout, event=event, checkin_list=passed_list)
+        LayoutActivation.objects.create(
+            layout=layout, event=event, checkin_list=passed_list
+        )
     assert _available_names(event) == ["Default"]
 
     assert _delete_list(logged_in_client, event, passed_list).status_code == 302
@@ -593,7 +632,10 @@ def test_deleting_other_lists_changes_nothing(
     _delete_list(logged_in_client, event, unrelated)
     assert _available_names(event) == ["Default", "Organizer-wide"]
     with scopes_disabled():
-        assert LayoutActivation.objects.get(layout=passed_layout, event=event).checkin_list == passed_list
+        assert (
+            LayoutActivation.objects.get(layout=passed_layout, event=event).checkin_list
+            == passed_list
+        )
 
 
 @pytest.mark.django_db
@@ -601,7 +643,9 @@ def test_deactivated_template_is_blocked_everywhere(
     logged_in_client, client, event, order, pos, layout, passed_list, self_service
 ):
     with scopes_disabled():
-        LayoutActivation.objects.create(layout=layout, event=event, checkin_list=passed_list)
+        LayoutActivation.objects.create(
+            layout=layout, event=event, checkin_list=passed_list
+        )
     _delete_list(logged_in_client, event, passed_list)
 
     response = logged_in_client.get(_download(event, pos), {"layout": layout.pk})
@@ -612,14 +656,22 @@ def test_deactivated_template_is_blocked_everywhere(
 
 
 @pytest.mark.django_db
-def test_deactivated_template_can_be_reactivated(logged_in_client, event, layout, passed_list):
+def test_deactivated_template_can_be_reactivated(
+    logged_in_client, event, layout, passed_list
+):
     with scopes_disabled():
-        LayoutActivation.objects.create(layout=layout, event=event, checkin_list=passed_list)
+        LayoutActivation.objects.create(
+            layout=layout, event=event, checkin_list=passed_list
+        )
     _delete_list(logged_in_client, event, passed_list)
 
     toggle = reverse(
         "plugins:pretix_attendance_certificate_neo:layouts.toggle",
-        kwargs={"organizer": event.organizer.slug, "event": event.slug, "layout": layout.pk},
+        kwargs={
+            "organizer": event.organizer.slug,
+            "event": event.slug,
+            "layout": layout.pk,
+        },
     )
     page = reverse(
         "plugins:pretix_attendance_certificate_neo:layouts",
@@ -648,4 +700,6 @@ def test_event_copy_deactivates_template_whose_list_is_missing(
 
         assert not passed_layout.active_events.filter(pk=new_event.pk).exists()
         copied = new_event.attendance_certificate_layouts.get()
-        assert LayoutActivation.objects.get(layout=copied, event=new_event).active is False
+        assert (
+            LayoutActivation.objects.get(layout=copied, event=new_event).active is False
+        )

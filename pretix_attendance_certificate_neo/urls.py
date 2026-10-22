@@ -1,4 +1,5 @@
 from django.urls import re_path
+
 from .views.editor import EditorView
 from .views.emails import SendCertificateEmailView
 from .views.event_templates import (

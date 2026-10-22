@@ -22,22 +22,20 @@ from urllib.parse import urlparse
 
 import requests
 from asn1crypto import tsp
-from django.conf import settings
-from django.core.cache import cache
-from django.utils.translation import gettext as _
-
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.x509.oid import NameOID
+from django.conf import settings
+from django.core.cache import cache
+from django.utils.translation import gettext as _
+from pretix.helpers.ssrf import should_block_access
 from pyhanko.keys import load_certs_from_pemder_data, load_private_key_from_pemder_data
 from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
 from pyhanko.sign import fields, signers
-from pyhanko.sign.timestamps import TimestampRequestError, TimeStamper
+from pyhanko.sign.timestamps import TimeStamper, TimestampRequestError
 from pyhanko_certvalidator.registry import SimpleCertificateStore
-
-from pretix.helpers.ssrf import should_block_access
 
 from pretix_attendance_certificate_neo.models import (
     OrganizerSigningCertificate,
@@ -73,7 +71,7 @@ class CertificateInfo:
 
     @property
     def expired(self):
-        return self.not_after < datetime.datetime.now(datetime.timezone.utc)
+        return self.not_after < datetime.datetime.now(datetime.UTC)
 
 
 def _pem_private_key(key):
@@ -96,7 +94,7 @@ def generate_self_signed(common_name, organization="", valid_days=5 * 365):
     if organization:
         attributes.append(x509.NameAttribute(NameOID.ORGANIZATION_NAME, organization))
     name = x509.Name(attributes)
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     cert = (
         x509.CertificateBuilder()
         .subject_name(name)
@@ -136,7 +134,7 @@ def load_pkcs12(data, password=None):
             data, password.encode() if password else None
         )
     except (ValueError, TypeError) as e:
-        raise InvalidCertificate(str(e))
+        raise InvalidCertificate(str(e)) from e
     if key is None or cert is None:
         raise InvalidCertificate("The file does not contain a key and a certificate.")
     chain = "".join(_pem_certificate(c) for c in extra or [] if c != cert)
@@ -160,20 +158,17 @@ def check_pair(certificate_pem, private_key_pem):
         cert = x509.load_pem_x509_certificate(certificate_pem.encode())
         key = serialization.load_pem_private_key(private_key_pem.encode(), None)
     except (ValueError, TypeError) as e:
-        raise InvalidCertificate(str(e))
+        raise InvalidCertificate(str(e)) from e
     public = serialization.PublicFormat.SubjectPublicKeyInfo
     encoding = serialization.Encoding.DER
-    if cert.public_key().public_bytes(encoding, public) != key.public_key().public_bytes(
+    if cert.public_key().public_bytes(
         encoding, public
-    ):
+    ) != key.public_key().public_bytes(encoding, public):
         raise InvalidCertificate("The private key does not match the certificate.")
 
 
 def chain_info(chain_pem):
-    return [
-        certificate_info(pem)
-        for pem in _split_pem(chain_pem)
-    ]
+    return [certificate_info(pem) for pem in _split_pem(chain_pem)]
 
 
 def _split_pem(pem):
@@ -250,7 +245,7 @@ def validate_timestamp_url(url):
     try:
         infos = socket.getaddrinfo(parsed.hostname, parsed.port or 443)
     except OSError:
-        raise ValueError(_("The host name could not be resolved."))
+        raise ValueError(_("The host name could not be resolved.")) from None
     for info in infos:
         if should_block_access(info[4])[0]:
             raise ValueError(_("Addresses in internal networks are not allowed."))
@@ -336,7 +331,7 @@ def sign_pdf(pdf: bytes, signing: OrganizerSigningCertificate) -> bytes:
 
     if signing.timestamp_mode == TimestampMode.REQUIRED:
         raise TimestampError(
-            "Could not get a trusted timestamp from {}: {}".format(url, error)
+            f"Could not get a trusted timestamp from {url}: {error}"
         ) from error
     logger.warning(
         "Signing without timestamp, timestamp server %s failed: %s", url, error

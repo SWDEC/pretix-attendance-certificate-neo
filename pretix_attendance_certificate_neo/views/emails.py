@@ -1,16 +1,16 @@
 import logging
 
 from django import forms
+from django.contrib.humanize.templatetags.humanize import intcomma
+from django.db.models import Exists, OuterRef
+from django.template.loader import get_template
 from django.templatetags.static import static
 from django.urls import reverse
-from django.template.loader import get_template
-from django.contrib.humanize.templatetags.humanize import intcomma
-from django.utils.translation import gettext_lazy as _, ngettext
-
-from pretix.plugins.sendmail.views import BaseSenderView
+from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext
+from pretix.base.models import Checkin, Order, OrderPosition
 from pretix.plugins.sendmail.forms import BaseMailForm
-from django.db.models import Exists, OuterRef
-from pretix.base.models import Checkin, OrderPosition, Order
+from pretix.plugins.sendmail.views import BaseSenderView
 
 from pretix_attendance_certificate_neo.models import LayoutActivation, available_layouts
 from pretix_attendance_certificate_neo.tasks import send_certificate_of_attendance_mails
@@ -47,7 +47,8 @@ class CertificateEmailForm(BaseMailForm):
 class SendCertificateEmailView(BaseSenderView):
     form_class = CertificateEmailForm
     form_fragment_name = (
-        "pretix_attendance_certificate_neo/send_form_fragment_attendance_certificate.html"
+        "pretix_attendance_certificate_neo/"
+        "send_form_fragment_attendance_certificate.html"
     )
     context_parameters = ["event", "order", "position_or_address"]
     task = send_certificate_of_attendance_mails

@@ -5,7 +5,6 @@ import pytest
 from django.utils import translation
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
-
 from pretix.base.models import (
     Event,
     Item,
@@ -36,10 +35,10 @@ def _accept_legacy_team_kwargs():
         event_perms, organizer_perms = {}, {}
         for legacy, new in OLD_TO_NEW_EVENT_MIGRATION.items():
             if kwargs.pop(legacy, False):
-                event_perms.update({n: True for n in new})
+                event_perms.update(dict.fromkeys(new, True))
         for legacy, new in OLD_TO_NEW_ORGANIZER_MIGRATION.items():
             if kwargs.pop(legacy, False):
-                organizer_perms.update({n: True for n in new})
+                organizer_perms.update(dict.fromkeys(new, True))
         if event_perms:
             kwargs["limit_event_permissions"] = event_perms
         if organizer_perms:

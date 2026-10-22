@@ -3,10 +3,9 @@ from io import BytesIO
 import pytest
 from django.core.cache import cache
 from django_scopes import scopes_disabled
-
+from pyhanko.keys import load_certs_from_pemder_data
 from pyhanko.pdf_utils.reader import PdfFileReader
 from pyhanko.sign.validation import validate_pdf_signature
-from pyhanko.keys import load_certs_from_pemder_data
 from pyhanko_certvalidator import ValidationContext
 
 from pretix_attendance_certificate_neo import signing
@@ -152,10 +151,10 @@ def test_public_certificate_download_never_contains_the_key(
 
 @pytest.mark.django_db
 def test_import_via_ui(organizer_client, event, keypair):
-    from django.core.files.uploadedfile import SimpleUploadedFile
     from cryptography import x509
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.serialization import pkcs12
+    from django.core.files.uploadedfile import SimpleUploadedFile
 
     p12 = pkcs12.serialize_key_and_certificates(
         b"x",
@@ -166,16 +165,22 @@ def test_import_via_ui(organizer_client, event, keypair):
     )
     bad = organizer_client.post(
         _url(event),
-        {"action": "import", "import-pkcs12": SimpleUploadedFile("a.p12", p12),
-         "import-password": "wrong"},
+        {
+            "action": "import",
+            "import-pkcs12": SimpleUploadedFile("a.p12", p12),
+            "import-password": "wrong",
+        },
     )
     assert bad.status_code == 200
     with scopes_disabled():
         assert not OrganizerSigningCertificate.objects.exists()
     good = organizer_client.post(
         _url(event),
-        {"action": "import", "import-pkcs12": SimpleUploadedFile("a.p12", p12),
-         "import-password": "secret"},
+        {
+            "action": "import",
+            "import-pkcs12": SimpleUploadedFile("a.p12", p12),
+            "import-password": "secret",
+        },
     )
     assert good.status_code == 302
     with scopes_disabled():
@@ -211,7 +216,7 @@ def _ca_chain_p12():
     from cryptography.hazmat.primitives.serialization import pkcs12
     from cryptography.x509.oid import NameOID
 
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
 
     def make(cn, issuer_name, issuer_key, ca):
         key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -224,7 +229,9 @@ def _ca_chain_p12():
             .serial_number(x509.random_serial_number())
             .not_valid_before(now - datetime.timedelta(minutes=5))
             .not_valid_after(now + datetime.timedelta(days=30))
-            .add_extension(x509.BasicConstraints(ca=ca, path_length=0 if ca else None), True)
+            .add_extension(
+                x509.BasicConstraints(ca=ca, path_length=0 if ca else None), True
+            )
             .add_extension(
                 x509.KeyUsage(
                     digital_signature=not ca,
@@ -251,7 +258,7 @@ def _ca_chain_p12():
 
 
 def test_pkcs12_chain_is_kept():
-    data, root = _ca_chain_p12()
+    data, _root = _ca_chain_p12()
     cert_pem, _key, chain = signing.load_pkcs12(data)
     assert cert_pem.count("BEGIN CERTIFICATE") == 1
     assert chain.count("BEGIN CERTIFICATE") == 1
@@ -325,17 +332,16 @@ def tsa():
 
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Fake TSA")])
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     cert = (
         x509.CertificateBuilder()
-        .subject_name(name).issuer_name(name)
+        .subject_name(name)
+        .issuer_name(name)
         .public_key(key.public_key())
         .serial_number(x509.random_serial_number())
         .not_valid_before(now - datetime.timedelta(minutes=5))
         .not_valid_after(now + datetime.timedelta(days=30))
-        .add_extension(
-            x509.ExtendedKeyUsage([ExtendedKeyUsageOID.TIME_STAMPING]), True
-        )
+        .add_extension(x509.ExtendedKeyUsage([ExtendedKeyUsageOID.TIME_STAMPING]), True)
         .sign(key, hashes.SHA256())
     )
     cert_pem = cert.public_bytes(serialization.Encoding.PEM)
@@ -414,8 +420,10 @@ def test_one_client_is_reused_per_url(event, keypair):
 
 def _signing_obj(keypair, mode):
     return OrganizerSigningCertificate(
-        certificate_pem=keypair[0], private_key_pem=keypair[1],
-        timestamp_mode=mode, timestamp_url=TSA_URL,
+        certificate_pem=keypair[0],
+        private_key_pem=keypair[1],
+        timestamp_mode=mode,
+        timestamp_url=TSA_URL,
     )
 
 
@@ -574,9 +582,12 @@ def test_timestamp_url_validation(monkeypatch, url, resolves_to, ok):
 
 
 @pytest.mark.django_db
-def test_settings_form_requires_url_unless_off(organizer_client, event, signing_cfg, monkeypatch):
+def test_settings_form_requires_url_unless_off(
+    organizer_client, event, signing_cfg, monkeypatch
+):
     monkeypatch.setattr(
-        signing.socket, "getaddrinfo",
+        signing.socket,
+        "getaddrinfo",
         lambda host, port: [(2, 1, 6, "", ("93.184.216.34", port))],
     )
     base = {"action": "settings", "enabled": "on", "reason": "x"}

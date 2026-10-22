@@ -1,34 +1,38 @@
-from pretix.base.i18n import language
-from django.utils.translation import gettext as _
-from io import BytesIO
-from django.core.files import File
 import json
-from django.core.files.storage import default_storage
-from django.contrib.staticfiles import finders
-from pretix.base.pdf import Renderer
-from pretix_attendance_certificate_neo.models import (
-    AttendanceCertificateLayout,
-    available_layouts,
-)
-from reportlab.pdfgen import canvas
-from reportlab.lib import pagesizes
-from django.core.files.base import ContentFile
-from pretix_attendance_certificate_neo.signing import sign_pdf, signing_for
 from contextlib import nullcontext
+from io import BytesIO
 from itertools import product
+
+from django.contrib.staticfiles import finders
+from django.core.files import File
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.utils.translation import gettext as _
 from i18nfield.strings import LazyI18nString
+from pretix.base.i18n import language
+from pretix.base.pdf import Renderer
+from reportlab.lib import pagesizes
 from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfgen import canvas
+
 from pretix_attendance_certificate_neo.markdown_text import (
     find_code_font,
     to_blocks,
     to_markup,
 )
+from pretix_attendance_certificate_neo.models import (
+    AttendanceCertificateLayout,
+    available_layouts,
+)
+from pretix_attendance_certificate_neo.signing import sign_pdf, signing_for
 
 _HEADING_SIZES = {1: 1.6, 2: 1.4, 3: 1.2, 4: 1.1, 5: 1.0, 6: 1.0}
 
 
 class _Entry:
-    def __init__(self, paragraph, offset=0, bullet=None, bullet_offset=0, gap=0, rule=None):
+    def __init__(
+        self, paragraph, offset=0, bullet=None, bullet_offset=0, gap=0, rule=None
+    ):
         self.paragraph = paragraph
         self.offset = offset
         self.bullet = bullet
@@ -103,7 +107,7 @@ class MarkdownRenderer(Renderer):
         names = set(pdfmetrics.getRegisteredFontNames())
         for family in self.event_fonts:
 
-            def name(bold, italic):
+            def name(bold, italic, family=family):
                 return family + (" B" if bold else "") + (" I" if italic else "")
 
             for bold, italic in product((False, True), repeat=2):
@@ -117,7 +121,7 @@ class MarkdownRenderer(Renderer):
                 }
                 pdfmetrics.registerFontFamily(
                     name(bold, italic),
-                    **{k: v for k, v in variants.items() if v in names}
+                    **{k: v for k, v in variants.items() if v in names},
                 )
 
     def _template_text(self, o):
@@ -132,7 +136,9 @@ class MarkdownRenderer(Renderer):
                 return str(LazyI18nString(o.get("text_i18n", {})))
             return o.get("text", "")
 
-    def _block_paragraph(self, op, order, o, text, legacy_lineheight, fontsize, **changes):
+    def _block_paragraph(
+        self, op, order, o, text, legacy_lineheight, fontsize, **changes
+    ):
         block_element = dict(
             o, content="other", text=text, text_i18n={}, _markdown=True, **changes
         )
@@ -140,7 +146,9 @@ class MarkdownRenderer(Renderer):
             op, order, block_element, legacy_lineheight, fontsize
         )
 
-    def _text_paragraph(self, op, order, o, legacy_lineheight=False, override_fontsize=None):
+    def _text_paragraph(
+        self, op, order, o, legacy_lineheight=False, override_fontsize=None
+    ):
         if o.get("content") not in ("other", "other_i18n"):
             return super()._text_paragraph(
                 op, order, o, legacy_lineheight, override_fontsize
@@ -150,7 +158,7 @@ class MarkdownRenderer(Renderer):
         step = fontsize * 1.6
         color = tuple(c / 255 for c in o["color"][:3])
 
-        entries, first, previous = [], None, None
+        entries, first, previous, previous_leading = [], None, None, 0
         for block in blocks:
             size = fontsize * (_HEADING_SIZES[block.level] if block.kind == "h" else 1)
             changes = {"bold": True} if block.kind == "h" else {}
@@ -172,7 +180,13 @@ class MarkdownRenderer(Renderer):
                     op, order, o, block.marker, legacy_lineheight, size, align="right"
                 )[0]
             entries.append(
-                _Entry(paragraph, block.indent * step, bullet, (block.indent - 1) * step, gap)
+                _Entry(
+                    paragraph,
+                    block.indent * step,
+                    bullet,
+                    (block.indent - 1) * step,
+                    gap,
+                )
             )
         if first is None:
             return self._block_paragraph(op, order, o, "", legacy_lineheight, fontsize)
@@ -194,7 +208,7 @@ def _renderer(event, layout):
     if isinstance(layout.background, File) and layout.background.name:
         bgf = default_storage.open(layout.background.name, "rb")
     else:
-        bgf = open(
+        bgf = open(  # noqa: SIM115 (the renderer reads it later)
             finders.find(
                 "pretix_attendance_certificate_neo/empty_attendance_certificate.pdf"
             ),

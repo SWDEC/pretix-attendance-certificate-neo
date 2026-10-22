@@ -3,7 +3,6 @@ import re
 import pytest
 from django.urls import reverse
 from django_scopes import scopes_disabled
-
 from pretix.base.models import Team, User
 
 from pretix_attendance_certificate_neo.models import AttendanceCertificateLayout
@@ -96,7 +95,8 @@ def test_list_offers_design_and_mail_text_buttons_for_organizer_layouts(
 def test_list_names_link_to_editor(organizer_client, event, layout, organizer_layout):
     content = organizer_client.get(_list_url(event)).rendered_content
     for lay in (layout, organizer_layout):
-        pattern = rf'<a href="{re.escape(_editor_url(event, lay))}">\s*{re.escape(lay.name)}\s*</a>'
+        href = re.escape(_editor_url(event, lay))
+        pattern = rf'<a href="{href}">\s*{re.escape(lay.name)}\s*</a>'
         assert re.search(pattern, content)
 
 
@@ -166,8 +166,12 @@ def test_update_event_layout_name_and_mail_text(logged_in_client, event, layout)
 
 
 @pytest.mark.django_db
-def test_update_cannot_target_organizer_layout(logged_in_client, event, organizer_layout):
-    response = logged_in_client.post(_update_url(event, organizer_layout), {"name": "x"})
+def test_update_cannot_target_organizer_layout(
+    logged_in_client, event, organizer_layout
+):
+    response = logged_in_client.post(
+        _update_url(event, organizer_layout), {"name": "x"}
+    )
     assert response.status_code == 404
 
 
@@ -180,15 +184,21 @@ def test_delete_event_owned_layout(logged_in_client, event, layout):
 
 
 @pytest.mark.django_db
-def test_delete_cannot_target_organizer_layout(logged_in_client, event, organizer_layout):
+def test_delete_cannot_target_organizer_layout(
+    logged_in_client, event, organizer_layout
+):
     response = logged_in_client.post(_delete_url(event, organizer_layout))
     assert response.status_code == 404
     with scopes_disabled():
-        assert AttendanceCertificateLayout.objects.filter(pk=organizer_layout.pk).exists()
+        assert AttendanceCertificateLayout.objects.filter(
+            pk=organizer_layout.pk
+        ).exists()
 
 
 @pytest.mark.django_db
-def test_editing_event_layout_needs_only_event_permission(logged_in_client, event, layout):
+def test_editing_event_layout_needs_only_event_permission(
+    logged_in_client, event, layout
+):
     response = logged_in_client.get(_editor_url(event, layout))
     assert response.status_code == 200
 
@@ -216,12 +226,18 @@ def test_editing_organizer_layout_with_organizer_permission(
 def _update_url(event, layout):
     return reverse(
         "plugins:pretix_attendance_certificate_neo:layouts.update",
-        kwargs={"organizer": event.organizer.slug, "event": event.slug, "layout": layout.pk},
+        kwargs={
+            "organizer": event.organizer.slug,
+            "event": event.slug,
+            "layout": layout.pk,
+        },
     )
 
 
 @pytest.mark.django_db
-def test_event_template_help_matches_the_send_page_list(logged_in_client, event, layout):
+def test_event_template_help_matches_the_send_page_list(
+    logged_in_client, event, layout
+):
     from pretix.base.email import get_available_placeholders
 
     event.settings.name_scheme = "given_family"
@@ -232,7 +248,7 @@ def test_event_template_help_matches_the_send_page_list(logged_in_client, event,
     content = logged_in_client.get(_update_url(event, layout)).rendered_content
     assert "Available placeholders:" in content
     for key in expected:
-        assert "{%s}" % key in content
+        assert f"{{{key}}}" in content
     assert "{name_given_name}" in content
 
 
@@ -241,7 +257,9 @@ def test_event_template_help_includes_event_meta_data(logged_in_client, event, l
     from pretix.base.models.event import EventMetaProperty
 
     with scopes_disabled():
-        EventMetaProperty.objects.create(organizer=event.organizer, name="Kurs", default="x")
+        EventMetaProperty.objects.create(
+            organizer=event.organizer, name="Kurs", default="x"
+        )
     content = logged_in_client.get(_update_url(event, layout)).rendered_content
     assert "{meta_Kurs}" in content
 
@@ -256,7 +274,9 @@ def test_event_template_help_with_full_name_scheme(logged_in_client, event, layo
 
 
 @pytest.mark.django_db
-def test_organizer_template_form_gives_general_heads_up(organizer_client, event, organizer_layout):
+def test_organizer_template_form_gives_general_heads_up(
+    organizer_client, event, organizer_layout
+):
     url = reverse(
         "plugins:pretix_attendance_certificate_neo:organizer.layouts.update",
         kwargs={"organizer": event.organizer.slug, "layout": organizer_layout.pk},
@@ -281,7 +301,9 @@ def _post_update(client, event, layout, **fields):
 def test_event_template_accepts_valid_placeholders(logged_in_client, event, layout):
     event.settings.name_scheme = "given_family"
     response = _post_update(
-        logged_in_client, event, layout,
+        logged_in_client,
+        event,
+        layout,
         mail_subject_0="[{event}] for {name_given_name}",
         mail_text_0="Dear {name_for_salutation}, order {code}: {url}",
     )
@@ -316,7 +338,9 @@ def test_event_template_rejects_name_part_the_event_does_not_have(
 @pytest.mark.django_db
 def test_event_template_rejects_unbalanced_braces(logged_in_client, event, layout):
     assert (
-        _post_update(logged_in_client, event, layout, mail_text_0="Hi {name").status_code
+        _post_update(
+            logged_in_client, event, layout, mail_text_0="Hi {name"
+        ).status_code
         == 200
     )
 
@@ -324,9 +348,21 @@ def test_event_template_rejects_unbalanced_braces(logged_in_client, event, layou
 @pytest.mark.django_db
 def test_event_template_validates_every_language(logged_in_client, event, layout):
     event.settings.locales = ["en", "de"]
-    ok = _post_update(logged_in_client, event, layout, mail_text_0="Hi {name}", mail_text_1="Hallo {name}")
+    ok = _post_update(
+        logged_in_client,
+        event,
+        layout,
+        mail_text_0="Hi {name}",
+        mail_text_1="Hallo {name}",
+    )
     assert ok.status_code == 302
-    bad = _post_update(logged_in_client, event, layout, mail_text_0="Hi {name}", mail_text_1="Hallo {nmae}")
+    bad = _post_update(
+        logged_in_client,
+        event,
+        layout,
+        mail_text_0="Hi {name}",
+        mail_text_1="Hallo {nmae}",
+    )
     assert bad.status_code == 200
 
 

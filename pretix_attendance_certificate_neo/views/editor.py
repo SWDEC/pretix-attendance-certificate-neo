@@ -1,21 +1,23 @@
+import json
+from io import BytesIO
+
+from django.contrib.staticfiles import finders
 from django.core.exceptions import PermissionDenied
 from django.core.files import File
-from django.contrib.staticfiles import finders
-from django.shortcuts import get_object_or_404
-from reportlab.pdfgen import canvas
 from django.core.files.storage import default_storage
-from reportlab.lib import pagesizes
-from io import BytesIO
-from pretix.base.pdf import Renderer
-from pretix_attendance_certificate_neo.render import MarkdownRenderer
-from pretix.base.models import CachedFile, OrderPosition
-import json
-from django.utils.translation import gettext_lazy as _
+from django.shortcuts import get_object_or_404
+from django.templatetags.static import static
 from django.utils.functional import cached_property
-from pretix_attendance_certificate_neo.models import AttendanceCertificateLayout
+from django.utils.translation import gettext_lazy as _
+from pretix.base.models import CachedFile, OrderPosition
+from pretix.base.pdf import Renderer
 from pretix.control.permissions import EventPermissionRequiredMixin
 from pretix.control.views.pdf import BaseEditorView
-from django.templatetags.static import static
+from reportlab.lib import pagesizes
+from reportlab.pdfgen import canvas
+
+from pretix_attendance_certificate_neo.models import AttendanceCertificateLayout
+from pretix_attendance_certificate_neo.render import MarkdownRenderer
 
 
 class EditorView(BaseEditorView):
@@ -43,7 +45,9 @@ class EditorView(BaseEditorView):
                 request=request,
             )
         if not allowed:
-            raise PermissionDenied(_("You do not have permission to view this content."))
+            raise PermissionDenied(
+                _("You do not have permission to view this content.")
+            )
         return super().dispatch(request, *args, **kwargs)
 
     @cached_property
@@ -62,7 +66,9 @@ class EditorView(BaseEditorView):
         return layout
 
     def get_default_background(self):
-        return static("pretix_attendance_certificate_neo/empty_attendance_certificate.pdf")
+        return static(
+            "pretix_attendance_certificate_neo/empty_attendance_certificate.pdf"
+        )
 
     def get_current_background(self):
         return (
@@ -109,7 +115,7 @@ class EditorView(BaseEditorView):
         elif isinstance(self.layout.background, File) and self.layout.background.name:
             bgf = default_storage.open(self.layout.background.name, "rb")
         else:
-            bgf = open(
+            bgf = open(  # noqa: SIM115 (the renderer reads it later)
                 finders.find(
                     "pretix_attendance_certificate_neo/empty_attendance_certificate.pdf"
                 ),

@@ -1,12 +1,12 @@
-from django.db import models
-from django.db.models import Q
-from django_scopes import scope
-from django.utils.crypto import get_random_string
-from i18nfield.fields import I18nCharField, I18nTextField
 import string
 
-from pretix.base.models import LoggedModel
+from django.db import models
+from django.db.models import Q
+from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
+from django_scopes import scope
+from i18nfield.fields import I18nCharField, I18nTextField
+from pretix.base.models import LoggedModel
 
 
 def bg_name(instance, filename: str) -> str:
@@ -50,9 +50,9 @@ class AttendanceCertificateLayout(LoggedModel):
     name = models.CharField(max_length=190, verbose_name=_("Name"))
     layout = models.TextField(
         default=(
-            '[{"type":"textarea","left":"13.09","bottom":"49.73","fontsize":"23.6","color":[0,0,0,1],'  # noqa
+            '[{"type":"textarea","left":"13.09","bottom":"49.73","fontsize":"23.6","color":[0,0,0,1],'
             '"fontfamily":"Open Sans","bold":true,"italic":false,"width":"121.83","content":"attendee_name",'  # noqa
-            '"text":"Marco","align":"center"}]'  # noqa
+            '"text":"Marco","align":"center"}]'
         )
     )
     background = models.FileField(
@@ -146,8 +146,8 @@ class OrganizerSigningCertificate(models.Model):
             "A timestamp from an independent time stamping authority (RFC 3161) "
             "proves when a certificate was signed and keeps the signature "
             "verifiable after your certificate expires. If the authority is "
-            "unreachable, \"if possible\" signs without a timestamp and logs a "
-            "warning, \"required\" refuses to create the certificate (e.g. "
+            'unreachable, "if possible" signs without a timestamp and logs a '
+            'warning, "required" refuses to create the certificate (e.g. '
             "the mail run stops)."
         ),
     )
@@ -164,10 +164,10 @@ class OrganizerSigningCertificate(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return "Signing certificate of {}".format(self.organizer_id)
+        return f"Signing certificate of {self.organizer_id}"
 
 
-class LayoutActivation(models.Model):
+class LayoutActivation(models.Model):  # noqa: DJ008
     """Per-event settings of a template.
 
     For an organizer-wide template the existence of this row *is* the

@@ -152,8 +152,8 @@ def pos2(order, item):
 
 
 def _check_in(pos, checkin_list, successful=True):
-    from pretix.base.models import Checkin
     from django.utils.timezone import now
+    from pretix.base.models import Checkin
 
     Checkin.objects.create(
         position=pos, list=checkin_list, datetime=now(), successful=successful
@@ -184,4 +184,3 @@ def test_posted_checkin_lists_are_ignored(
     )
     assert response.status_code == 302
     assert len(djmail.outbox) == 2
-

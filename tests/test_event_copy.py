@@ -2,7 +2,6 @@ import pytest
 from django.core.files.base import ContentFile
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
-
 from pretix.base.models import Event, Organizer
 from pretix.base.signals import event_copy_data
 

@@ -19,7 +19,9 @@ def test_single_event_owned_layout_is_available(event, layout):
 
 
 @pytest.mark.django_db
-def test_organizer_layout_not_available_until_activated(event, layout, organizer_layout):
+def test_organizer_layout_not_available_until_activated(
+    event, layout, organizer_layout
+):
     assert list(available_layouts(event)) == [layout]
 
     with scopes_disabled():
@@ -54,8 +56,8 @@ def test_no_candidates_when_everything_deactivated_or_deleted(event, layout):
 @pytest.mark.django_db
 def test_organizer_layout_scoped_to_its_own_events(event, organizer_layout):
     with scopes_disabled():
-        from pretix.base.models import Event
         from django.utils.timezone import now
+        from pretix.base.models import Event
 
         other_event = Event.objects.create(
             organizer=event.organizer,
@@ -72,7 +74,9 @@ def test_organizer_layout_scoped_to_its_own_events(event, organizer_layout):
 
 
 @pytest.mark.django_db
-def test_visible_to_includes_inactive_organizer_layouts(event, layout, organizer_layout):
+def test_visible_to_includes_inactive_organizer_layouts(
+    event, layout, organizer_layout
+):
     # visible_to() is used for permission scoping (e.g. editing), so it must
     # include organizer-wide layouts even before they are activated for this
     # specific event - unlike available_layouts().

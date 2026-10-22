@@ -4,7 +4,6 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-
 from pretix.base.models import OrderPosition
 from pretix.control.permissions import EventPermissionRequiredMixin
 
@@ -62,8 +61,7 @@ def resolve_requested_layout(request, position):
     eligible = [o for o in options if o.applicable]
     if not eligible:
         return None, _(
-            "This attendee is not eligible for any certificate of attendance "
-            "template."
+            "This attendee is not eligible for any certificate of attendance template."
         )
     if len(eligible) > 1:
         return None, _(
@@ -88,9 +86,7 @@ class DownloadCertificateView(EventPermissionRequiredMixin, View):
         return FileResponse(
             certificate,
             as_attachment=True,
-            filename="certificate-{code}-{pos}.pdf".format(
-                code=position.order.code, pos=position.positionid
-            ),
+            filename=f"certificate-{position.order.code}-{position.positionid}.pdf",
             content_type="application/pdf",
         )
 

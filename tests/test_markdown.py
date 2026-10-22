@@ -41,7 +41,9 @@ def test_code_uses_the_monospace_font_if_there_is_one():
 
 def test_find_code_font():
     assert find_code_font(["Open Sans", "Fira Mono", "Other"]) == "Fira Mono"
-    assert find_code_font(["Open Sans", "Fira-Mono", "Courier Prime"]) == "Courier Prime"
+    assert (
+        find_code_font(["Open Sans", "Fira-Mono", "Courier Prime"]) == "Courier Prime"
+    )
     assert find_code_font(["Open Sans", "Other"]) is None
 
 
@@ -78,9 +80,11 @@ def test_links():
     assert _markup("[x](mailto:a@b.de)") == ['<a href="mailto:a@b.de"><u>x</u></a>']
 
 
-@pytest.mark.parametrize("url", ["javascript:alert(1)", "example.com", "file:///etc/passwd"])
+@pytest.mark.parametrize(
+    "url", ["javascript:alert(1)", "example.com", "file:///etc/passwd"]
+)
 def test_links_with_other_schemes_are_text_only(url):
-    assert _markup("[x]({})".format(url)) == ["x"]
+    assert _markup(f"[x]({url})") == ["x"]
 
 
 def test_images_are_reduced_to_their_alt_text():
@@ -94,12 +98,15 @@ def test_html_is_not_interpreted():
 
 
 def test_placeholders_survive_underscores():
-    assert to_blocks("{attendee_name} and {a_b_c}")[0].text == "{attendee_name} and {a_b_c}"
+    assert (
+        to_blocks("{attendee_name} and {a_b_c}")[0].text
+        == "{attendee_name} and {a_b_c}"
+    )
 
 
 def test_markup_in_substituted_data_is_literal():
     text = to_blocks("Hi {attendee_name}, **welcome**")[0].text
-    data = '**x** <b>y</b> [a](http://evil.example) - z'
+    data = "**x** <b>y</b> [a](http://evil.example) - z"
     assert to_markup(text.replace("{attendee_name}", data)) == (
         "Hi **x** &lt;b&gt;y&lt;/b&gt; [a](http://evil.example) - z, <b>welcome</b>"
     )
@@ -119,9 +126,18 @@ def test_badly_nested_markers_fall_back_to_plain_text():
 
 def _field(text, bottom, type_="textarea", **extra):
     field = {
-        "type": type_, "left": "20", "bottom": str(bottom), "fontsize": "14",
-        "color": [0, 0, 0, 1], "fontfamily": "Open Sans", "bold": False, "italic": False,
-        "width": "150", "content": "other", "text": text, "align": "left",
+        "type": type_,
+        "left": "20",
+        "bottom": str(bottom),
+        "fontsize": "14",
+        "color": [0, 0, 0, 1],
+        "fontfamily": "Open Sans",
+        "bold": False,
+        "italic": False,
+        "width": "150",
+        "content": "other",
+        "text": text,
+        "align": "left",
         "lineheight": 1,
     }
     if type_ == "textcontainer":
@@ -143,12 +159,17 @@ def _render(layout, pos, event, fields):
 @pytest.mark.parametrize("type_", ["textarea", "textcontainer"])
 def test_lists_headings_and_links_are_drawn(event, pos, layout, type_):
     page = _render(
-        layout, pos, event,
-        [_field(
-            "# Course\n\nDear {attendee_name},\n\n- first\n- second\n\n"
-            "[the site](https://example.org/a-b)",
-            250, type_,
-        )],
+        layout,
+        pos,
+        event,
+        [
+            _field(
+                "# Course\n\nDear {attendee_name},\n\n- first\n- second\n\n"
+                "[the site](https://example.org/a-b)",
+                250,
+                type_,
+            )
+        ],
     )
     text = page.extract_text()
     for expected in ("Course", "Dear Marco Acierno,", "first", "second", "the site"):
@@ -177,13 +198,16 @@ def test_plain_text_is_unchanged(event, pos, layout):
 @pytest.mark.django_db
 def test_list_bullet_is_on_the_first_line_of_a_multiline_item(event, pos, layout):
     page = _render(
-        layout, pos, event,
+        layout,
+        pos,
+        event,
         [_field("- Entwicklung der Jugendarbeit im Verein", 250, width="40")],
     )
     lines = []
     page.extract_text(
-        visitor_text=lambda text, cm, tm, font, size: lines.append((text.strip(), tm[5] + cm[5]))
-        if text.strip() else None
+        visitor_text=lambda text, cm, tm, font, size: (
+            lines.append((text.strip(), tm[5] + cm[5])) if text.strip() else None
+        )
     )
     ys = dict(lines)
     assert len({y for _, y in lines}) > 1  # the item wraps

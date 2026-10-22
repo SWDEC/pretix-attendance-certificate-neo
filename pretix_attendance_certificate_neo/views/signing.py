@@ -2,9 +2,9 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView, View
-
 from pretix.control.permissions import OrganizerPermissionRequiredMixin
 from pretix.control.views.organizer import OrganizerDetailViewMixin
 
@@ -97,9 +97,7 @@ class SigningView(SigningMixin, TemplateView):
                 )
                 messages.success(request, _("Your changes have been saved."))
                 return redirect(self.success_url())
-            return self.render_to_response(
-                self.get_context_data(settings_form=form)
-            )
+            return self.render_to_response(self.get_context_data(settings_form=form))
 
         if action == "generate":
             form = GenerateCertificateForm(request.POST, prefix="generate")
@@ -160,7 +158,7 @@ class SigningCertificateDownloadView(SigningMixin, View):
         response = HttpResponse(
             current.certificate_pem, content_type="application/x-pem-file"
         )
-        response["Content-Disposition"] = 'attachment; filename="{}.pem"'.format(
-            request.organizer.slug
+        response["Content-Disposition"] = (
+            f'attachment; filename="{request.organizer.slug}.pem"'
         )
         return response

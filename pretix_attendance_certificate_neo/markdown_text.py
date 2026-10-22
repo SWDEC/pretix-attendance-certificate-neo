@@ -32,9 +32,7 @@ _HELD = re.compile("(\\d+)")
 
 # The markers carry a random per-process nonce, so attendee data can't forge them.
 _OPEN, _CLOSE = "" + secrets.token_hex(6), ""
-_MARKER = re.compile(
-    "{}(?P<code>/?[biuc]|/a|a(?P<href>[^{}]*)){}".format(_OPEN, _CLOSE, _CLOSE)
-)
+_MARKER = re.compile(f"{_OPEN}(?P<code>/?[biuc]|/a|a(?P<href>[^{_CLOSE}]*)){_CLOSE}")
 _TAGS = {
     "b": ("<b>", "</b>"),
     "i": ("<i>", "</i>"),
@@ -45,7 +43,7 @@ _UNDERLINE = r"(?<![\w+])(\+\+)(?=\S)(.+?)(?<=\S)\+\+(?![\w+])"
 _MONO_FONT = re.compile(r"mono|courier|code", re.IGNORECASE)
 _ALLOWED_SCHEMES = {"http", "https", "mailto", "tel"}
 _BLOCK_TAGS = {"p", "ul", "ol", "li", "blockquote", "pre", "hr"} | {
-    "h%d" % n for n in range(1, 7)
+    f"h{n}" for n in range(1, 7)
 }
 
 
@@ -133,7 +131,9 @@ def _walk(parent, blocks, indent, in_list):
             code = el.find("code")
             text = (el.text if code is None else code.text) or ""
             blocks.append(
-                Block("pre", _mark("c") + text.rstrip("\n") + _mark("/c"), indent=indent)
+                Block(
+                    "pre", _mark("c") + text.rstrip("\n") + _mark("/c"), indent=indent
+                )
             )
         elif el.tag == "hr":
             blocks.append(Block("hr", indent=indent))
@@ -142,7 +142,7 @@ def _walk(parent, blocks, indent, in_list):
 def _walk_list(el, blocks, indent):
     number = int(el.get("start", 1)) if el.tag == "ol" else 0
     for item in el:
-        marker = "•" if el.tag == "ul" else "{}.".format(number)
+        marker = "•" if el.tag == "ul" else f"{number}."
         number += 1
         first = len(blocks)
         text = _inline(item, skip=_BLOCK_TAGS)
@@ -164,7 +164,7 @@ def to_blocks(template_text):
 
     def hold(match):
         held.append(match.group(0))
-        return "{}".format(len(held) - 1)
+        return f"{len(held) - 1}"
 
     # Placeholders contain underscores, which Markdown would read as emphasis.
     root = _parse(_PLACEHOLDER.sub(hold, template_text))
@@ -177,9 +177,8 @@ def to_blocks(template_text):
 
 
 def _is_safe_url(url):
-    return (
-        urlparse(url).scheme.lower() in _ALLOWED_SCHEMES
-        and not re.search(r"[\s\x00-\x1f]", url)
+    return urlparse(url).scheme.lower() in _ALLOWED_SCHEMES and not re.search(
+        r"[\s\x00-\x1f]", url
     )
 
 
@@ -199,7 +198,7 @@ def to_markup(text, code_font=None):
     code_font, or in the font of the field if there is none."""
     tags = dict(_TAGS)
     if code_font:
-        tags["c"] = ('<font face="{}">'.format(html.escape(code_font)), "</font>")
+        tags["c"] = (f'<font face="{html.escape(code_font)}">', "</font>")
     else:
         tags["c"] = ("", "")
     escaped = str(conditional_escape(text))
@@ -217,7 +216,7 @@ def to_markup(text, code_font=None):
             if _is_safe_url(href):
                 # pretix puts a hairspace after every hyphen, also inside tags
                 url = html.escape(href.replace("-", "%2D"), quote=True)
-                out.append('<a href="{}"><u>'.format(url))
+                out.append(f'<a href="{url}"><u>')
                 stack.append(("/a", "</u></a>"))
             else:
                 stack.append(("/a", ""))

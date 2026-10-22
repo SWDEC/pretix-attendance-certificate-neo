@@ -1,12 +1,14 @@
 import datetime
-from pretix.celery_app import app
-from pretix.base.services.tasks import ProfiledEventTask
-from pretix.base.models import Event, InvoiceAddress, OrderPosition, User, CachedFile
+
 from i18nfield.strings import LazyI18nString
-from pretix.base.services.mail import mail
-from pretix.base.i18n import language
-from pretix.helpers.format import format_map
 from pretix.base.email import get_email_context
+from pretix.base.i18n import language
+from pretix.base.models import CachedFile, Event, InvoiceAddress, OrderPosition, User
+from pretix.base.services.mail import mail
+from pretix.base.services.tasks import ProfiledEventTask
+from pretix.celery_app import app
+from pretix.helpers.format import format_map
+
 from pretix_attendance_certificate_neo.models import AttendanceCertificateLayout
 from pretix_attendance_certificate_neo.render import render_certificate
 
@@ -18,7 +20,7 @@ def send_certificate_of_attendance_mails(
     subject: dict,
     message: dict,
     objects: list,
-    layout_id: int = None,
+    layout_id: int | None = None,
 ):
     user = User.objects.get(pk=user) if user else None
     layout = (

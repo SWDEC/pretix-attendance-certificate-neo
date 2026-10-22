@@ -4,17 +4,16 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, TemplateView, UpdateView
-
 from pretix.control.permissions import EventPermissionRequiredMixin
 from pretix.helpers.compat import CompatDeleteView
 
 from pretix_attendance_certificate_neo.forms import OrganizerLayoutForm
-from pretix_attendance_certificate_neo.views.presale import SELF_SERVICE_SETTING
 from pretix_attendance_certificate_neo.models import (
     AttendanceCertificateLayout,
     LayoutActivation,
     available_layouts,
 )
+from pretix_attendance_certificate_neo.views.presale import SELF_SERVICE_SETTING
 
 
 class EventLayoutFormMixin:
@@ -42,7 +41,10 @@ class EventLayoutListView(EventPermissionRequiredMixin, TemplateView):
             for layout in event.attendance_certificate_layouts.all()
         ]
         ctx["organizer_layouts"] = [
-            {"layout": layout, "active": layout.active_events.filter(pk=event.pk).exists()}
+            {
+                "layout": layout,
+                "active": layout.active_events.filter(pk=event.pk).exists(),
+            }
             for layout in AttendanceCertificateLayout.objects.filter(
                 organizer=event.organizer
             ).order_by("name")
@@ -55,7 +57,9 @@ class EventLayoutListView(EventPermissionRequiredMixin, TemplateView):
         ctx["assignments"] = [
             {
                 "layout": layout,
-                "checkin_list_id": getattr(activations.get(layout.pk), "checkin_list_id", None),
+                "checkin_list_id": getattr(
+                    activations.get(layout.pk), "checkin_list_id", None
+                ),
             }
             for layout in available_layouts(event)
         ]
@@ -109,9 +113,9 @@ class EventLayoutToggleView(EventPermissionRequiredMixin, TemplateView):
         else:
             messages.success(
                 request,
-                _('The template "{name}" is no longer available for this event.').format(
-                    name=layout.name
-                ),
+                _(
+                    'The template "{name}" is no longer available for this event.'
+                ).format(name=layout.name),
             )
         return redirect(
             reverse(
@@ -135,7 +139,7 @@ class EventLayoutAssignView(EventPermissionRequiredMixin, TemplateView):
         event = request.event
         lists = {str(c.pk): c for c in event.checkin_lists.all()}
         for layout in available_layouts(event):
-            raw_list = request.POST.get("list_%d" % layout.pk, "")
+            raw_list = request.POST.get(f"list_{layout.pk}", "")
             if raw_list and raw_list not in lists:
                 messages.error(request, _("Your changes could not be saved."))
                 return redirect(self._back())
@@ -158,7 +162,9 @@ class EventLayoutAssignView(EventPermissionRequiredMixin, TemplateView):
         )
 
 
-class EventLayoutCreateView(EventLayoutFormMixin, EventPermissionRequiredMixin, CreateView):
+class EventLayoutCreateView(
+    EventLayoutFormMixin, EventPermissionRequiredMixin, CreateView
+):
     model = AttendanceCertificateLayout
     template_name = "pretix_attendance_certificate_neo/event_layout_edit.html"
     permission = "can_change_event_settings"
@@ -189,7 +195,9 @@ class EventLayoutCreateView(EventLayoutFormMixin, EventPermissionRequiredMixin, 
         return super().form_invalid(form)
 
 
-class EventLayoutUpdateView(EventLayoutFormMixin, EventPermissionRequiredMixin, UpdateView):
+class EventLayoutUpdateView(
+    EventLayoutFormMixin, EventPermissionRequiredMixin, UpdateView
+):
     model = AttendanceCertificateLayout
     template_name = "pretix_attendance_certificate_neo/event_layout_edit.html"
     permission = "can_change_event_settings"

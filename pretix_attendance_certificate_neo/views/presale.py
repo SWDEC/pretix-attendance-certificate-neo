@@ -4,7 +4,6 @@ from django.http import FileResponse, Http404
 from django.utils.timezone import now
 from django.views import View
 from django_scopes import scope
-
 from pretix.base.models import Checkin, Order
 
 from pretix_attendance_certificate_neo.models import certificate_options
@@ -77,7 +76,11 @@ class SelfServiceDownloadView(View):
         ):
             raise Http404()
         option = next(
-            (o for o in downloadable_options(position) if o.pk == int(kwargs["layout"])),
+            (
+                o
+                for o in downloadable_options(position)
+                if o.pk == int(kwargs["layout"])
+            ),
             None,
         )
         if option is None:
@@ -85,8 +88,6 @@ class SelfServiceDownloadView(View):
         return FileResponse(
             render_certificate(position=position, event=event, layout=option.layout),
             as_attachment=True,
-            filename="certificate-{code}-{pos}.pdf".format(
-                code=order.code, pos=position.positionid
-            ),
+            filename=f"certificate-{order.code}-{position.positionid}.pdf",
             content_type="application/pdf",
         )
