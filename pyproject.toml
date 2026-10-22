@@ -2,7 +2,7 @@
 name = "pretix-attendance-certificate-neo"
 dynamic = ["version"]
 description = "Create attendance certificates for your attendees (fork of pythonitalia/pretix-plugin-attendance-certificate)"
-readme = "README.rst"
+readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 keywords = ["pretix"]
