@@ -12,14 +12,6 @@ from pretix_attendance_certificate_neo.models import available_layouts
 from pretix_attendance_certificate_neo.render import render_certificate
 from pretix_attendance_certificate_neo.tasks import send_certificate_of_attendance_mails
 
-DEFAULT_SUBJECT = _("[{event}] Your certificate of attendance")
-DEFAULT_MESSAGE = _(
-    "Hello,\n\n"
-    "please find your certificate of attendance for {event} attached to this "
-    "email.\n\n"
-    "Best regards"
-)
-
 
 def _get_position(request, pk) -> OrderPosition:
     return get_object_or_404(
@@ -118,8 +110,8 @@ class SendCertificateView(EventPermissionRequiredMixin, View):
             kwargs={
                 "event": request.event.pk,
                 "user": request.user.pk,
-                "subject": DEFAULT_SUBJECT,
-                "message": DEFAULT_MESSAGE,
+                "subject": layout.mail_subject.data,
+                "message": layout.mail_text.data,
                 "objects": [position.pk],
                 "layout_id": layout.pk,
             }
