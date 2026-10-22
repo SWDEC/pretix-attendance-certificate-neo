@@ -1,0 +1,52 @@
+{#- Changelog template for commitizen: one "###" heading per commit scope (one scope per
+    group of changes, e.g. a pull request) instead of one per change type. Scopes that
+    are not in the list below come after the listed ones, commits without scope last.
+    Within a heading, changes are grouped by type and listed oldest first. -#}
+{%- set titles = {
+    "fork": "Fork",
+    "download": "Certificate download",
+    "tests": "Test suite",
+    "mail-single": "Sending to single attendees",
+    "org-wide": "Organizer-wide templates",
+    "mail-template": "Email text per template",
+    "copy": "Event copy",
+    "checkin-list": "Check-in lists",
+    "self-service": "Self-service download",
+    "locale": "Translations",
+    "dependencies": "Dependencies",
+    "signing": "Digital signature",
+    "markdown": "Markdown text",
+} -%}
+{%- for entry in tree %}
+## {{ entry.version }}{% if entry.date %} ({{ entry.date }}){% endif %}
+{%- set ns = namespace(scopes=[]) %}
+{%- for scope in titles %}
+{%- for changes in entry.changes.values() %}
+{%- for change in changes if change.scope == scope and scope not in ns.scopes %}
+{%- set ns.scopes = ns.scopes + [scope] %}
+{%- endfor %}
+{%- endfor %}
+{%- endfor %}
+{%- for changes in entry.changes.values() %}
+{%- for change in changes if change.scope not in ns.scopes and change.scope %}
+{%- set ns.scopes = ns.scopes + [change.scope] %}
+{%- endfor %}
+{%- endfor %}
+{%- set ns.scopes = ns.scopes + [None] %}
+{%- for scope in ns.scopes %}
+{%- set ns.lines = [] %}
+{%- for change_key, changes in entry.changes.items() %}
+{%- for change in changes | reverse if change.scope == scope and change.message %}
+{%- set ns.lines = ns.lines + ["- **" ~ change_key ~ "**: " ~ change.message] %}
+{%- endfor %}
+{%- endfor %}
+{%- if ns.lines %}
+
+
+### {{ titles.get(scope, scope) if scope else "Other" }}
+
+{{ ns.lines | join("\n") }}
+{%- endif %}
+{%- endfor %}
+
+{% endfor -%}
