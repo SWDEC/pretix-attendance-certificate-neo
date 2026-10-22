@@ -91,6 +91,20 @@ def layout(event):
 
 
 @pytest.fixture
+def organizer_layout(event):
+    return AttendanceCertificateLayout.objects.create(
+        organizer=event.organizer, name="Organizer-wide"
+    )
+
+
+@pytest.fixture
+def second_organizer_layout(event):
+    return AttendanceCertificateLayout.objects.create(
+        organizer=event.organizer, name="Organizer-wide 2"
+    )
+
+
+@pytest.fixture
 def item(event):
     return Item.objects.create(
         name="Test item", event=event, default_price=13, admission=True
@@ -130,8 +144,22 @@ def logged_in_client(client, event):
         organizer=event.organizer,
         can_view_orders=True,
         can_change_orders=True,
+        can_change_event_settings=True,
     )
     team.members.add(user)
     team.limit_events.add(event)
+    client.force_login(user)
+    return client
+
+
+@pytest.fixture
+def organizer_client(client, event):
+    user = User.objects.create_user("orgadmin@dummy.dummy", "orgadmin")
+    team = Team.objects.create(
+        organizer=event.organizer,
+        can_change_organizer_settings=True,
+        all_events=True,
+    )
+    team.members.add(user)
     client.force_login(user)
     return client
