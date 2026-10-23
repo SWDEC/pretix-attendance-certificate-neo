@@ -104,6 +104,4 @@ version_provider = "commitizen"
 tag_format = "v$version"
 annotated_tag = true
 update_changelog_on_bump = true
-# One changelog heading per commit scope, see the template.
-template = "CHANGELOG.md.j2"
 version_files = ["pretix_attendance_certificate_neo/__init__.py:__version__"]
