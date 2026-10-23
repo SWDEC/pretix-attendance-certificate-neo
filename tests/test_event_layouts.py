@@ -379,3 +379,29 @@ def test_organizer_template_is_not_validated_against_one_event(
         url, {"name": "x", "mail_subject_0": "S", "mail_text_0": "Hi {name_given_name}"}
     )
     assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_enabling_plugin_creates_no_event_layout():
+    from django.utils.timezone import now
+    from pretix.base.models import Event, Organizer
+
+    with scopes_disabled():
+        organizer = Organizer.objects.create(name="Other", slug="other")
+        event = Event.objects.create(
+            organizer=organizer, name="Other", slug="other", date_from=now()
+        )
+        event.enable_plugin("pretix_attendance_certificate_neo")
+        event.save()
+        assert not AttendanceCertificateLayout.objects.filter(event=event).exists()
+
+
+@pytest.mark.django_db
+def test_editor_url_requires_layout(event):
+    from django.urls import NoReverseMatch
+
+    with pytest.raises(NoReverseMatch):
+        reverse(
+            "plugins:pretix_attendance_certificate_neo:edit",
+            kwargs={"organizer": event.organizer.slug, "event": event.slug},
+        )

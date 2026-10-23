@@ -43,10 +43,6 @@ class AttendanceCertificateLayout(LoggedModel):
         blank=True,
         related_name="active_organizer_certificate_layouts",
     )
-    default = models.BooleanField(
-        verbose_name=_("Default"),
-        default=False,
-    )
     name = models.CharField(max_length=190, verbose_name=_("Name"))
     layout = models.TextField(
         default=(

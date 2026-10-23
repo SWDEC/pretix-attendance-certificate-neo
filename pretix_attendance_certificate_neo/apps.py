@@ -1,4 +1,4 @@
-from django.utils.translation import gettext, gettext_lazy
+from django.utils.translation import gettext_lazy
 
 from . import __version__
 
@@ -29,9 +29,3 @@ class PluginApp(PluginConfig):
 
     def ready(self):
         from . import signals  # NOQA
-
-    def installed(self, event):
-        if not event.attendance_certificate_layouts.exists():
-            event.attendance_certificate_layouts.create(
-                name=gettext("Default"),
-            )

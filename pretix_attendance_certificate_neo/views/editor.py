@@ -52,18 +52,10 @@ class EditorView(BaseEditorView):
 
     @cached_property
     def layout(self):
-        layout_pk = self.kwargs.get("layout")
-        if layout_pk:
-            return get_object_or_404(
-                AttendanceCertificateLayout.visible_to(self.request.event), pk=layout_pk
-            )
-        layout = self.request.event.attendance_certificate_layouts.first()
-        if layout is None:
-            layout = self.request.event.attendance_certificate_layouts.create(
-                name=_("Default"),
-                default=True,
-            )
-        return layout
+        return get_object_or_404(
+            AttendanceCertificateLayout.visible_to(self.request.event),
+            pk=self.kwargs["layout"],
+        )
 
     def get_default_background(self):
         return static(

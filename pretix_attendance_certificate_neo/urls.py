@@ -22,7 +22,7 @@ from .views.signing import SigningCertificateDownloadView, SigningView
 
 urlpatterns = [
     re_path(
-        r"^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/attendance-certificate/editor(?:/layout/(?P<layout>\d+))?/?$",
+        r"^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/attendance-certificate/editor/layout/(?P<layout>\d+)/?$",
         EditorView.as_view(),
         name="edit",
     ),
