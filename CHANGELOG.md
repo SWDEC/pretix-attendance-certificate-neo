@@ -1,3 +1,9 @@
+## v1.0.1 (2026-10-23)
+
+### Fix
+
+- **fork**: show the plugin as Attendance Certificate Neo in the plugin list
+
 ## v1.0.0 (2026-10-23)
 
 ### Fork
