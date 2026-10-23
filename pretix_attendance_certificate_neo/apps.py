@@ -16,7 +16,7 @@ class PluginApp(PluginConfig):
     verbose_name = "Attendance Certificate"
 
     class PretixPluginMeta:
-        name = gettext_lazy("Attendance Certificate")
+        name = gettext_lazy("Attendance Certificate Neo")
         author = "et15, Python Italia"
         description = gettext_lazy("Create Attendance Certificates for your attendees")
         visible = True

@@ -13,9 +13,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: apps.py:16 views/emails.py:49
+#: views/emails.py:49
 msgid "Attendance Certificate"
 msgstr "Teilnahmebescheinigung"
+
+#: apps.py:19
+msgid "Attendance Certificate Neo"
+msgstr "Teilnahmebescheinigung Neo"
 
 #: apps.py:18
 msgid "Create Attendance Certificates for your attendees"
